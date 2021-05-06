@@ -1,5 +1,3 @@
-import pycom
-import time
 ################################
 # @Time    : 5/7/2021
 # @Author  : Yenchia Yu
@@ -7,6 +5,9 @@ import time
 # @Github  : https://github.com/Rexyyj
 # @Note    : None
 ################################
+import pycom
+import time
+
 pycom.heartbeat(False)
 
 while True:
