@@ -11,19 +11,11 @@ import socket
 import ubinascii
 from machine import Timer
 import pycom
+
 pycom.heartbeat(False)
-# init Sigfox for RCZ1 (Europe)
-sigfox = Sigfox(mode=Sigfox.SIGFOX, rcz=Sigfox.RCZ1)
 
-# create a Sigfox socket
-s = socket.socket(socket.AF_SIGFOX, socket.SOCK_RAW)
-
-# make the socket blocking
-s.setblocking(True)
-
-# configure it as DOWNLINK specified by 'True'
-s.setsockopt(socket.SOL_SIGFOX, socket.SO_RX, True)
-
+# calculate color according to index in [0,90]
+# when index become lager, color change from green to red
 def getColor(val):
     one = (255 + 255) / 60
     r=0
@@ -39,9 +31,22 @@ def getColor(val):
         r = 255
     return r*0x010000+g*0x0100+b*0x01
 
+# init Sigfox for RCZ4 (Taiwan)
+sigfox = Sigfox(mode=Sigfox.SIGFOX, rcz=Sigfox.RCZ4)
+
+# create a Sigfox socket
+s = socket.socket(socket.AF_SIGFOX, socket.SOCK_RAW)
+
+# make the socket blocking
+s.setblocking(True)
+
+# configure it as DOWNLINK specified by 'True'
+s.setsockopt(socket.SOL_SIGFOX, socket.SO_RX, True)
+
 
 while True:
-    # send some bytes and request DOWNLINK
+    print("sigfox frequency:"+sigfox.frequencies())
+    
     print("sigfox send")
     s.send(bytes([1, 2, 3]))
 
@@ -50,11 +55,8 @@ while True:
     print(ubinascii.hexlify(r))
     rssi = sigfox.rssi()
     print("\nupdate rssi\n")
-    index = (adv.rssi)/(120)*85
-    if index > 0 and index<90:
-        col = getColor(index)
-    else:
-        col = getColor(90)
+    index = (adv.rssi)/(-150)*85
+    col = getColor(index)
     pycom.rgbled(col)
 
 

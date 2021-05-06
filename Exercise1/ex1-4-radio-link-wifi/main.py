@@ -11,20 +11,8 @@ from network import WLAN
 import machine
 import time
 
-pycom.heartbeat(False)
-
-wlan = WLAN(mode=WLAN.STA)
-nets = wlan.scan()
-
-for net in nets:
-  print(net)
-
-wlan.connect(ssid='Rex_YYJ', auth=(WLAN.WPA2, '11111111'))
-while not wlan.isconnected():
-    machine.idle()
-print("WiFi connected succesfully")
-print(wlan.ifconfig())
-
+# calculate color according to index in [0,90]
+# when index become lager, color change from green to red
 def getColor(val):
   one = (255 + 255) / 60
   r=0
@@ -40,10 +28,25 @@ def getColor(val):
     r = 255
   return r*0x010000+g*0x0100+b*0x01
 
+pycom.heartbeat(False)
+
+wlan = WLAN(mode=WLAN.STA)
+nets = wlan.scan()
+
+for net in nets:
+  print(net)
+
+wlan.connect(ssid='Rex_YYJ', auth=(WLAN.WPA2, '11111111'))
+while not wlan.isconnected():
+    machine.idle()
+print("WiFi connected succesfully")
+print(wlan.ifconfig())
+
+
 
 while True:
   data =wlan.scan(ssid='Rex_YYJ')
-  print(data[0].rssi)
+  print("rssi: "+str(data[0].rssi)+" channel: "+str(data[0].channel))
   col = getColor(data[0].rssi/(-100)*90)
   pycom.rgbled(col)
   time.sleep(1)
