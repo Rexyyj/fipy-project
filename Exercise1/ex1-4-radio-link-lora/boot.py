@@ -1,4 +1,11 @@
 # boot.py -- run on boot-up
+################################
+# @Time    : 5/7/2021
+# @Author  : Yenchia Yu
+# @Mail    : jiafish@outlook.com
+# @Github  : https://github.com/Rexyyj
+# @Note    : None
+################################
 from _pybytes import Pybytes
 import pycom
 import time
