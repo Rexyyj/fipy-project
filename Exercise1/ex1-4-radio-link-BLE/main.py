@@ -40,6 +40,7 @@ class BluetoothTest():
         if self.led_on:
             adv = self.bluetooth.get_adv()
             if adv and self.bluetooth.resolve_adv_data(adv.data, Bluetooth.ADV_NAME_CMPL)=='Rex':
+                print("rssi = "+str(adv.rssi))
                 index = (adv.rssi)/(-150)*90
                 col = self.getColor(index)
                 pycom.rgbled(col)
@@ -57,7 +58,6 @@ class BluetoothTest():
                     print(adv)
             
             if self.chrono.read() > t:
-                self.led_on=True
                 self.chrono.stop()
                 break
         print("Stop printing scanning")
@@ -65,7 +65,7 @@ class BluetoothTest():
     def main(self):
         update_alarm = Timer.Alarm(self.led_handler,ms=200, periodic=True)
         
-        self.bluetooth_scan(5)
+        self.bluetooth_scan(3)
 
         while self.bluetooth.isscanning():
             adv = self.bluetooth.get_adv()
@@ -73,10 +73,12 @@ class BluetoothTest():
                 print("Find device,connecting...")
                 try:
                     self.bluetooth.connect(adv.mac)
+                    pass
                 except:
                     print("Fail to connect to target")
                     continue
                 print("Connected to device with addr = {}".format(ubinascii.hexlify(adv.mac)))
+                self.led_on=True
                 while True:
                     pass
             else:

@@ -30,12 +30,15 @@ def getColor(val):
 
 pycom.heartbeat(False)
 
+print("Scanning the spectrum...")
 wlan = WLAN(mode=WLAN.STA)
 nets = wlan.scan()
 
 for net in nets:
   print(net)
+print("Stop scanning.\n")
 
+print("Connecting to AP...")
 wlan.connect(ssid='Rex_YYJ', auth=(WLAN.WPA2, '11111111'))
 while not wlan.isconnected():
     machine.idle()
@@ -43,7 +46,7 @@ print("WiFi connected succesfully")
 print(wlan.ifconfig())
 
 
-
+print("Updating AP's signal level and LED color...")
 while True:
   data =wlan.scan(ssid='Rex_YYJ')
   print("rssi: "+str(data[0].rssi)+" channel: "+str(data[0].channel))

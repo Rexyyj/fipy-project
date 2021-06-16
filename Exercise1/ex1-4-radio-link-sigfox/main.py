@@ -11,9 +11,8 @@ import socket
 import ubinascii
 from machine import Timer
 import pycom
-
+import time
 pycom.heartbeat(False)
-
 # calculate color according to index in [0,90]
 # when index become lager, color change from green to red
 def getColor(val):
@@ -33,31 +32,32 @@ def getColor(val):
 
 # init Sigfox for RCZ4 (Taiwan)
 sigfox = Sigfox(mode=Sigfox.SIGFOX, rcz=Sigfox.RCZ4)
-
+print("sigfox frequency:"+str(sigfox.frequencies()))
 # create a Sigfox socket
 s = socket.socket(socket.AF_SIGFOX, socket.SOCK_RAW)
 
 # make the socket blocking
-s.setblocking(True)
+s.setblocking(False)
 
 # configure it as DOWNLINK specified by 'True'
 s.setsockopt(socket.SOL_SIGFOX, socket.SO_RX, True)
+socket.timeout(20)
+s.settimeout(20)
 
 
-while True:
-    print("sigfox frequency:"+sigfox.frequencies())
-    
-    print("sigfox send")
-    s.send(bytes([1, 2, 3]))
 
-    # await DOWNLINK message
-    r = s.recv(32)
-    print(ubinascii.hexlify(r))
-    rssi = sigfox.rssi()
-    print("\nupdate rssi\n")
-    index = (adv.rssi)/(-150)*85
-    col = getColor(index)
-    pycom.rgbled(col)
+print("sigfox send")
+s.send(bytes([1, 2, 3]))
+print("send finished")
+# await DOWNLINK message
+r = s.recv(32)
+print(ubinascii.hexlify(r))
+rssi = sigfox.rssi()
+print("rssi = "+str(rssi))
+index = (rssi)/(-150)*85
+col = getColor(index)
+pycom.rgbled(col)
+time.sleep(10)
 
 
 

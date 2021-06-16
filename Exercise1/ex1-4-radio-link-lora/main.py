@@ -4,7 +4,7 @@
 # @Author  : Yenchia Yu
 # @Mail    : jiafish@outlook.com
 # @Github  : https://github.com/Rexyyj
-# @Note    : This code is not tested due to the condition that no active TTN gateway nearby.
+# @Note    : None
 ################################
 
 from network import LoRa
@@ -46,8 +46,8 @@ lora.join(activation=LoRa.OTAA, auth=(dev_eui, app_eui, app_key), timeout=0)
 while not lora.has_joined():
     time.sleep(2.5)
     print('Not yet joined...')
-
 print('Joined')
+
 # create a LoRa socket
 
 s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
@@ -69,6 +69,9 @@ while True:
     data = s.recv(64)
     print(data)
     stat = lora.stats()
+    print(stat)
+    print(data)
     print("tx frequency = "+str(stat.tx_frequency))
     col = (stat.rssi)/(-150)*85
-    pycom.rgbled(col)
+    pycom.rgbled(int(col))
+    time.sleep(2)

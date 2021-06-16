@@ -67,16 +67,16 @@ class Sensor():
 
 	# generate different color for different pitch and roll
 	def get_col(self,roll,pitch):
-		if roll > 5 :
+		if roll > 5 and roll < 90:
 			r = 0xFF0000
-		elif roll < -5:
+		elif roll < -5 and roll >-90:
 			r = 0x0F0000
 		else:
-			r = 0x0000FF
+			r = 0x0000
 
-		if pitch > 5:
+		if pitch > 5 and pitch<90:
 			g = 0xFF00
-		elif pitch<-5:
+		elif pitch<-5 and pitch >-90:
 			g = 0x0F00
 		else:
 			g = 0x0000 
@@ -107,7 +107,7 @@ class Sensor():
 	def main(self):
 		self.bluetooth_enable()
 		alarms = []
-		alarms.append(Timer.Alarm(self.data_update_handler,s=1, periodic=True))
+		alarms.append(Timer.Alarm(self.data_update_handler,ms=500, periodic=True))
 		alarms.append(Timer.Alarm(self.led_handler,ms=500, periodic=True))
 		alarms.append(Timer.Alarm(self.ble_handler,s=5, periodic=True))
 		alarms.append(Timer.Alarm(self.wifi_handler,s=10, periodic=True))
