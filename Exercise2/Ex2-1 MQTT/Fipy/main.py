@@ -12,7 +12,8 @@ import machine
 import time
 import ujson as json
 import _thread
-
+from SI7006A20 import SI7006A20
+from pycoproc_2 import Pycoproc
 class MyMqtt():
    
     def __init__(self,clientId,userName):
@@ -21,6 +22,11 @@ class MyMqtt():
         self.client = MQTTClient(self.clientId, "test.mosquitto.org",port=1883)
         self.client.set_callback(self.sub_cb)
         self.__msg={"from":self.userName, "msg":""}
+        py = Pycoproc()
+        if py.read_product_id() != Pycoproc.USB_PID_PYSENSE:
+            raise Exception('Not a Pysense')
+        self.si = SI7006A20(py)
+            
         
     def check_msg_update(self):
         while True:
@@ -44,10 +50,45 @@ class MyMqtt():
 
     def sub_cb(self,topic, msg):
         payload = json.loads(msg)
+        topic = topic.decode()
         if payload["from"]==self.userName:
             pass
         else:
+            print(topic)
             print("From "+payload["from"]+": "+payload["msg"])
+            if topic == "user/broadcast/rx":
+                if payload["msg"].replace(" ","")=="diagnostic":
+                    self.publish(payload["from"], self.get_disgnostic_content())
+                else: 
+                    msglist= payload["msg"].split(" ")
+                    for submsg in msglist:
+                        if submsg == "hello":
+                            self.publish(payload["from"], "Hi I am here!")
+                            break
+
+            elif topic=="user/"+self.userName+"/rx":
+                if payload["msg"].replace(" ","")=="diagnostic":
+                    self.publish(payload["from"], self.get_disgnostic_content())
+                elif 'hello' in payload["msg"].split(" "):
+                    self.publish(payload["from"], "Hi "+payload["from"]+"!")
+                else:
+                    pass
+
+
+    def get_disgnostic_content(self):
+        temp = self.si.temperature()
+        status = ""
+        if temp<10:
+            status= "cold"
+        elif temp<25:
+            status= "cool"
+        elif temp<35:
+            status= "warm"
+        else:
+            status="hot"
+        content = "It's "+status+" here! The temperature is "+str(round(temp,2))+" degree Celsius."
+        return content
+        
 
 if __name__ == "__main__":
     wlan = WLAN(mode=WLAN.STA)
