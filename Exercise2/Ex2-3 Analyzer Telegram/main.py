@@ -9,12 +9,24 @@
 from network import WLAN
 import ubinascii
 import time
+import urequest
+import ujson as json
 class Analyzer():
     
     def __init__(self,mode="STA_AP"):
         self.wlan= None
         self.wlan_init(mode)
         self.connectedDevDict = {}
+        counter = 0 
+        while True:
+            if self.wlan.isconnected()==True:
+                print("Connected to wlan")
+                break
+            else:
+                counter+=1
+            if counter>10:
+                raise Exception("wlan connection fail")
+            time.sleep(1)
 
     def wlan_init(self,mode):
         if self.wlan != None:
@@ -54,20 +66,54 @@ class Analyzer():
         return newDev,inactivateDev
 
 
+class Telebot():
+    
+    def __init__(self,token):
+        self.chats=set()
+        self.url = "https://api.telegram.org/bot"+token
+
+
+    def update_chats(self):
+        info = urequest.request("POST",self.url+"/getUpdates").json()
+        for update in info["result"]:
+            self.chats.add(update["message"]["chat"]["id"])
+
+    def send_message(self,message):
+        msglist = message.split(" ")
+        msg = msglist[0]
+        if len(msglist)>1:
+            for i in range(len(msglist)-1):
+                msg = msg+"+"+msglist[i+1]
+        
+        for chat in self.chats:
+            single_msg =self.url+"/sendMessage?chat_id="+str(chat)+"&text="+msg
+            response=urequest.request("POST",single_msg).json()
+            if response["ok"]=="false":
+                self.chats.remove(chat)
+    
+
 
 
 
 
 if __name__ == "__main__":
     analyser = Analyzer()
+    telebot = Telebot("1896597789:AAFItPt0tAY3EoLrJ64XNJdEMnPqQBzXRB8")
+    telebot.update_chats()
     while True:
         newDev,inactivateDev = analyser.analyser()
         print("new device:")
         print(newDev)
+        if len(newDev)!=0:
+            for dev in newDev:
+                telebot.send_message("Found new device: "+str(dev))
+                time.sleep(0.5)
         print("inactive device")
         print(inactivateDev)
+        if len(inactivateDev)!=0:
+            for dev in inactivateDev:
+                telebot.send_message("Device offline: "+str(dev))
+                time.sleep(0.5)
         time.sleep(5)
 
 
-
-    
