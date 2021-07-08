@@ -16,8 +16,8 @@ class MyBleServer():
    
     def __init__(self,userName):
         self.userName = userName
-        self.__msg={"from":self.userName, "msg":""}
-        
+        self.counter=0
+        self.message=""
         py = Pycoproc()
         if py.read_product_id() != Pycoproc.USB_PID_PYSENSE:
             raise Exception('Not a Pysense')
@@ -31,6 +31,7 @@ class MyBleServer():
         chr1 = srv1.characteristic(uuid=0xec0e, value='read_from_here')
         chr1.callback(trigger=Bluetooth.CHAR_WRITE_EVENT, handler=self.chr1_handler)
         print('Start BLE service')
+        self.chr = chr1
 
     def conn_cb(self,chr):
         events = chr.events()
@@ -43,40 +44,59 @@ class MyBleServer():
 
     def chr1_handler(self,chr, data):
         events, value = data
+        payload = value.decode()
         if events & Bluetooth.CHAR_WRITE_EVENT:
-            print(data)
-            payload = value.decode()
-            print(payload)
-            re_msg = "error"
-            command,target,msg = self.split_payload(payload)
-            if command=="sendto":
-                if target==self.userName:
-                    temp = msg.split(" ")
-                    if msg == "diagnost":
-                        re_msg = "From "+self.userName+": "+self.get_disgnostic_content()
-                    elif "hello" in temp:
-                        re_msg = "From "+self.userName+": hi there"
-                else:
-                    temp = msg.split(" ")
-                    if "hello" in temp:
-                        re_msg = "From "+self.userName+": hay I am here too!"
-                
-                if len(re_msg)>20:
-                    sendtime =int(len(re_msg)/20)
-                    sendlist = []
-                    for i in range(sendtime):
-                        temp_msg = re_msg[(i*20):(20+i*20)]
-                        sendlist.append(temp_msg)
-                    chr.value(re_msg[(20*sendtime):])  
-                    time.sleep(0.1)
-                    sendlist.reverse()
-                    for send in sendlist:
-                        chr.value(send)
-                        time.sleep(0.1)
-                else:              
-                    chr.value(re_msg)
+            self.counter=5
+            self.message+=payload
+            pass
+
+    def start_response_service(self):
+        _thread.start_new_thread(self.aggrate_message, ())
+
+
+    def aggrate_message(self):
+        while True:
+            while self.counter>0:
+                self.counter=self.counter-1
+                if self.counter == 0:
+                    self.action_and_feedback(self.message)
+                    self.message=""
+                time.sleep(0.1)
+
+
+    def action_and_feedback(self,payload):
+        re_msg = "error"
+        command,target,msg = self.split_payload(payload)
+        print("Received message: "+msg)
+        if command=="sendto":
+            if target==self.userName:
+                temp = msg.split(" ")
+                if msg == "diagnostic":
+                    re_msg = "From "+self.userName+": "+self.get_disgnostic_content()
+                elif "hello" in temp:
+                    re_msg = "From "+self.userName+": hi there"
             else:
-                pass
+                temp = msg.split(" ")
+                if "hello" in temp:
+                    re_msg = "From "+self.userName+": hay I am here too!"
+            
+            if len(re_msg)>20:
+                sendtime =int(len(re_msg)/20)
+                sendlist = []
+                for i in range(sendtime):
+                    temp_msg = re_msg[(i*20):(20+i*20)]
+                    sendlist.append(temp_msg)
+                self.chr.value(re_msg[(20*sendtime):])  
+                time.sleep(0.1)
+                sendlist.reverse()
+                for send in sendlist:
+                    self.chr.value(send)
+                    time.sleep(0.1)
+            else:              
+                self.chr.value(re_msg)
+        else:
+            pass
+
 
     def split_payload(self,payload):
         payloadlist = payload.split(" ")
@@ -92,14 +112,6 @@ class MyBleServer():
                 msg = msg+" "+payloadlist[i+3]
         return command,target,msg
     
-
-    # def publish(self,target,content):
-    #     msg = self.__msg
-    #     msg["msg"]=content
-    #     if target == "all":
-    #         self.client.publish(topic="user/broadcast/rx",msg=json.dumps(msg))
-    #     else:
-    #         self.client.publish(topic="user/"+target+"/rx",msg= json.dumps(msg))
 
 
     def get_disgnostic_content(self):
@@ -120,25 +132,10 @@ class MyBleServer():
 if __name__ == "__main__":
 
     myBleServer  = MyBleServer("fipy")
-
+    myBleServer.start_response_service()
     while True:
         time.sleep(1)
 
-    # while True:
-    #     msg = input("> ")
-    #     if len(msg)>0:
-    #         msglist=msg.split(" ")
-    #         if len(msglist)>2:
-    #             if msglist[0]!="sendto":
-    #                 print("Command not exsit!")
-    #                 continue
-    #             msgToSend = ""
-    #             msgLen = len(msglist)
-    #             for i in range(2,msgLen):
-    #                 msgToSend = msgToSend+msglist[i]+" "
-            
-    #             myMqtt.publish(msglist[1], msgToSend)
-    #         else:
-    #             print("Command not exsit!")
+
         
     
