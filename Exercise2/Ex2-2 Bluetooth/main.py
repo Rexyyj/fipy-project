@@ -43,26 +43,55 @@ class MyBleServer():
 
     def chr1_handler(self,chr, data):
         events, value = data
-        print(data)
-        payload = json.loads(value.decode())
-        print(payload)
-        print("From "+payload["from"]+": "+payload["msg"])
         if events & Bluetooth.CHAR_WRITE_EVENT:
-            if payload["msg"].replace(" ","")=="diagnostic":
-                    msg = self.get_msg(self.get_disgnostic_content())
-                    chr.value(msg)
-            else: 
-                msglist= payload["msg"].split(" ")
-                for submsg in msglist:
-                    if submsg == "hello":
-                        msg = self.get_msg("Hi I am here!")
-                        chr.value(msg)
-                        break
+            print(data)
+            payload = value.decode()
+            print(payload)
+            re_msg = "error"
+            command,target,msg = self.split_payload(payload)
+            if command=="sendto":
+                if target==self.userName:
+                    temp = msg.split(" ")
+                    if msg == "diagnost":
+                        re_msg = "From "+self.userName+": "+self.get_disgnostic_content()
+                    elif "hello" in temp:
+                        re_msg = "From "+self.userName+": hi there"
+                else:
+                    temp = msg.split(" ")
+                    if "hello" in temp:
+                        re_msg = "From "+self.userName+": hay I am here too!"
+                
+                if len(re_msg)>20:
+                    sendtime =int(len(re_msg)/20)
+                    sendlist = []
+                    for i in range(sendtime):
+                        temp_msg = re_msg[(i*20):(20+i*20)]
+                        sendlist.append(temp_msg)
+                    chr.value(re_msg[(20*sendtime):])  
+                    time.sleep(0.1)
+                    sendlist.reverse()
+                    for send in sendlist:
+                        chr.value(send)
+                        time.sleep(0.1)
+                else:              
+                    chr.value(re_msg)
+            else:
+                pass
 
-    def get_msg(self,content):
-        msg = self.__msg
-        msg["msg"]=content
-        return json.dumps(msg)
+    def split_payload(self,payload):
+        payloadlist = payload.split(" ")
+        command = ""
+        target =""
+        msg = ""
+        if len(payloadlist)>=3:
+            command = payloadlist[0]
+            target = payloadlist[1]
+            msg = payloadlist[2]
+        if len(payloadlist)>3:
+            for i in range(len(payloadlist)-3):
+                msg = msg+" "+payloadlist[i+3]
+        return command,target,msg
+    
 
     # def publish(self,target,content):
     #     msg = self.__msg
@@ -90,7 +119,7 @@ class MyBleServer():
 
 if __name__ == "__main__":
 
-    myBleServer  = MyBleServer("Rex_fipy")
+    myBleServer  = MyBleServer("fipy")
 
     while True:
         time.sleep(1)
