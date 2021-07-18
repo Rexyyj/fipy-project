@@ -4,7 +4,7 @@
 # @Author  : Yenchia Yu
 # @Mail    : jiafish@outlook.com
 # @Github  : https://github.com/Rexyyj
-# @Note    : The main code is in boot.py
+# @Note    : 
 ################################
 from mqtt import MQTTClient
 from network import WLAN

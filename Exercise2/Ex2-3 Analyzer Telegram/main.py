@@ -99,8 +99,8 @@ class Telebot():
 if __name__ == "__main__":
     analyser = Analyzer()
     telebot = Telebot("1896597789:AAFItPt0tAY3EoLrJ64XNJdEMnPqQBzXRB8")
-    telebot.update_chats()
     while True:
+        telebot.update_chats()
         newDev,inactivateDev = analyser.analyser()
         print("new device:")
         print(newDev)
