@@ -1,2 +1,2 @@
 # fipy-project
-This is a course project for course "Innovative wireless platforms for the internet of things" in Politecnico di Torino.
+This is a course project for course "Innovative wireless platforms for the internet of things" in Politecnico di Torino. The main target is to study and use FiPy development board to design IoT applications.
